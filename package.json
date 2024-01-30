@@ -1,0 +1,10 @@
+{
+  "name": "todomvc-wasm",
+  "version": "1.0.0",
+  "description": "",
+  "author": "Jonatan Borkowski",
+  "license": "ISC",
+  "dependencies": {
+    "todomvc-app-css": "^2.4.3"
+  }
+}
