@@ -288,13 +288,13 @@ fn todo_footer(props: &TodoFooterProps) -> Html {
             <span class="todo-count"><strong>{props.num_items_left}</strong>{" item left!"}</span>
                 <ul class="filters">
                     <li>
-                       <Link<Route> to={Route::All}><a class={(props.current_route == Route::All).then(|| Some("selected"))}>{"All"}</a></Link<Route>>
+                        <a href="active" class={(props.current_route == Route::All).then(|| Some("selected"))}>{"All"}</a>
                     </li>
                     <li>
-                        <Link<Route> to={Route::Active}><a class={(props.current_route == Route::Active).then(|| Some("selected"))}>{"Active"}</a></Link<Route>>
+                        <a href="active" class={(props.current_route == Route::Active).then(|| Some("selected"))}>{"Active"}</a>
                     </li>
                     <li>
-                        <Link<Route> to={Route::Completed}><a class={(props.current_route == Route::Completed).then(|| Some("selected"))}>{"Completed"}</a></Link<Route>>
+                        <a href="completed" class={(props.current_route == Route::Completed).then(|| Some("selected"))}>{"Completed"}</a>
                     </li>
                 </ul>
             <button class="clear-completed" onclick={props.clear_completed.clone()}>{"Clear completed"}</button>
