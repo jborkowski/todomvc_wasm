@@ -1,9 +1,15 @@
 use log::info;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
-#[function_component(App)]
-fn app() -> Html {
+#[derive(Properties, PartialEq)]
+struct TodoAppProp {
+    current_route: Route,
+}
+
+#[function_component(TodoApp)]
+fn todo_app(props: &TodoAppProp) -> Html {
     use rand::Rng;
     let rng = rand::thread_rng();
     let todos = use_state(|| vec![]);
@@ -13,14 +19,20 @@ fn app() -> Html {
         Callback::from(move |event: KeyboardEvent| {
             if event.key() == "Enter" {
                 let input = event.target_dyn_into::<HtmlInputElement>();
+
                 let mut rng = rng.clone();
 
                 if let Some(input) = input {
-                    let mut todos_arr = (*todos).clone();
-                    let id: usize = rng.gen();
-                    todos_arr.push(Todo::new(id, input.value()));
+                    let value = input.value().trim().to_string();
 
-                    todos.set(todos_arr);
+                    if value.len() > 0 {
+                        let mut todos_arr = (*todos).clone();
+                        let id: usize = rng.gen();
+                        todos_arr.push(Todo::new(id, value));
+                        todos.set(todos_arr);
+
+                        input.set_value("");
+                    }
                 }
             }
         })
@@ -38,10 +50,26 @@ fn app() -> Html {
                 }
             });
 
-            info!("Toggled {:?}", todos_arr.clone());
             todos.set(todos_arr);
         })
     };
+
+    let ontoggleall =
+        {
+            let todos = todos.clone();
+
+            Callback::from(move |_| {
+                let mut todos_arr: Vec<Todo> = (*todos).clone();
+
+                let all_selected = todos_arr.iter().all(|todo| todo.completed);
+
+                todos_arr.iter_mut().for_each(|t| {
+                    t.completed = !all_selected.clone();
+                });
+
+                todos.set(todos_arr);
+            })
+        };
 
     let onremove =
         {
@@ -70,41 +98,60 @@ fn app() -> Html {
         })
     };
 
+    let num_items_left = (*todos).iter().filter(|todo| !todo.completed).count();
+
+    let clear_completed = {
+        let todos = todos.clone();
+        Callback::from(move |_| {
+            let mut todos_arr: Vec<Todo> = (*todos).clone();
+            todos_arr.retain_mut(|t| !(*t).completed);
+
+            todos.set(todos_arr);
+        })
+    };
+
     html! {
         <section class="todoapp">
             <TodoHeader onkeydown={onnew} />
             <TodoMain
+              current_route={props.current_route.clone()}
               todos={(*todos).clone()}
               ontoggle={ontoggle}
               onremove={onremove}
-              onupdate={onupdate} />
-            <TodoFooter />
+              onupdate={onupdate}
+              ontoggleall={ontoggleall}  />
+            <TodoFooter current_route={props.current_route.clone()} num_items_left={num_items_left} clear_completed={clear_completed}/>
         </section>
     }
 }
 
 #[function_component(TodoMain)]
 fn todo_main(props: &TodosProps) -> Html {
-    let active_todo = props
-        .todos
-        .iter()
-        // .filter(|todo| !todo.completed)
-        .map(|todo| {
-            let props = props.clone();
-            html! {
-                <TodoItem
-                  todo={todo.clone()}
-                  onupdate={move |todo| props.onupdate.emit(todo)}
-                  ontoggle={move |todo| props.ontoggle.emit(todo)}
-                  onremove={move |todo_id| props.onremove.emit(todo_id)} />
+    let active_todo =
+        props
+            .todos
+            .iter()
+            .filter(|todo| match props.current_route {
+                Route::All => true,
+                Route::Active => !todo.completed,
+                Route::Completed => todo.completed,
+            })
+            .map(|todo| {
+                let props = props.clone();
+                html! {
+                    <TodoItem
+                      todo={todo.clone()}
+                      onupdate={move |todo| props.onupdate.emit(todo)}
+                      ontoggle={move |todo| props.ontoggle.emit(todo)}
+                      onremove={move |todo_id| props.onremove.emit(todo_id)} />
 
-            }
-        })
-        .collect::<Html>();
+                }
+            })
+            .collect::<Html>();
 
     html! {
         <section class="main">
-            <input id="toggle-all" class="toggle-all" type="checkbox" />
+            <input id="toggle-all" class="toggle-all" type="checkbox" onclick={props.ontoggleall.clone()} />
             <label for="toggle-all">{"Mark all as complete"}</label>
             <ul class="todo-list"> {active_todo} </ul>
         </section>
@@ -123,25 +170,6 @@ struct TodoItemProps {
 fn todo_item(props: &TodoItemProps) -> Html {
     let editing = use_state(|| false);
     let input_ref = use_node_ref();
-
-    // {
-    //     let input_ref = input_ref.clone();
-    //     use_effect_with(input_ref, |input_ref| {
-    //         let input = input_ref
-    //             .cast::<HtmlInputElement>()
-    //             .expect("input_ref not attached to input element");
-
-    //         input.focus();
-
-    //         let listener = Closure::<dyn Fn(Event)>::wrap(Box::new(|event| {
-    //             web_sys::console::log_1(&"Clicked!".into());
-    //         }));
-
-    //         input
-    //             .add_event_listener_with_callback("click", listener.as_ref().unchecked_ref())
-    //             .unwrap();
-    //     })
-    // }
 
     let handle_double_click =
         {
@@ -191,10 +219,9 @@ fn todo_item(props: &TodoItemProps) -> Html {
 
             if let Some(input) = input {
                 let mut todo = props.todo.clone();
-
                 let value = input.value().trim().to_string();
-                if value.len() > 0 {
-                    todo.title = input.value();
+                if value.len() == 0 {
+                    todo.title = value;
                     props.onupdate.emit(todo);
                     editing.set(false);
                 } else {
@@ -212,14 +239,17 @@ fn todo_item(props: &TodoItemProps) -> Html {
     html! {
         <li class={classes!(props.todo.completed.then(|| Some("completed")), (*editing).then(|| Some("editing")))}>
             <div class="view">
-                <input class="toggle" type="checkbox" checked={props.todo.completed} onchange={move |_| props.ontoggle.emit(todo.clone())} />
-                <label ondblclick={handle_double_click}>{todo_title}</label>
+                <input class="toggle" type="checkbox" checked={props.todo.completed} onchange={move |e: Event| {
+                    props.ontoggle.emit(todo.clone());
+                    e.prevent_default();
+                }} />
+                <label ondblclick={handle_double_click}>{&todo_title}</label>
                 <button class="destroy" onclick={move |_| props.onremove.emit(todo_id)} />
             </div>
 
             if *editing {
             <div class="input-container">
-                <input class="edit" id="edit-todo-input" ref={input_ref} onblur={handle_submit} onkeydown={handle_keydown} value={props.todo.title.clone()} />
+                <input class="edit" id="edit-todo-input" ref={input_ref} onblur={handle_submit} onkeydown={handle_keydown} value={todo_title} />
                 <label class="visually-hidden" htmlFor="edit-todo-input">
                     {"Edit Todo Input"}
                 </label>
@@ -239,32 +269,59 @@ fn todo_header(props: &TodoHeaderProps) -> Html {
     html! {
         <header class="header">
             <h1>{"todos"}</h1>
-            <input class={"new-todo"} placeholder={"What needs to be done?"} onkeydown={props.onkeydown.clone()} />
+            <input class={"new-todo"} placeholder={"What needs to be done?"} onkeydown={props.onkeydown.clone()}/>
         </header>
     }
 }
 
 #[derive(Properties, PartialEq, Clone)]
-pub struct TodoFooterProps {}
+pub struct TodoFooterProps {
+    clear_completed: Callback<MouseEvent>,
+    current_route: Route,
+    num_items_left: usize,
+}
 
 #[function_component(TodoFooter)]
 fn todo_footer(props: &TodoFooterProps) -> Html {
     html! {
         <footer class="footer">
-            <span class="todo-count"><strong>{0}</strong>{"item left"}</span>
+            <span class="todo-count"><strong>{props.num_items_left}</strong>{" item left!"}</span>
                 <ul class="filters">
                     <li>
-                        <a class="selected" href="#/">{"All"}</a>
+                       <Link<Route> to={Route::All}><a class={(props.current_route == Route::All).then(|| Some("selected"))}>{"All"}</a></Link<Route>>
                     </li>
                     <li>
-                        <a href="#/active">{"Active"}</a>
+                        <Link<Route> to={Route::Active}><a class={(props.current_route == Route::Active).then(|| Some("selected"))}>{"Active"}</a></Link<Route>>
                     </li>
                     <li>
-                        <a href="#/completed">{"Completed"}</a>
+                        <Link<Route> to={Route::Completed}><a class={(props.current_route == Route::Completed).then(|| Some("selected"))}>{"Completed"}</a></Link<Route>>
                     </li>
                 </ul>
-            <button class="clear-completed">{"Clear completed"}</button>
+            <button class="clear-completed" onclick={props.clear_completed.clone()}>{"Clear completed"}</button>
         </footer>
+    }
+}
+
+#[derive(Clone, Routable, PartialEq)]
+enum Route {
+    #[at("/")]
+    All,
+    #[at("/active")]
+    Active,
+    #[at("/completed")]
+    Completed,
+}
+
+fn switch(route: Route) -> Html {
+    html! { <TodoApp current_route={route} /> }
+}
+
+#[function_component(App)]
+fn app() -> Html {
+    html! {
+        <BrowserRouter>
+            <Switch<Route> render={switch} />
+        </BrowserRouter>
     }
 }
 
@@ -276,6 +333,8 @@ fn main() {
 
 #[derive(Properties, PartialEq, Clone)]
 struct TodosProps {
+    ontoggleall: Callback<MouseEvent>,
+    current_route: Route,
     todos: Vec<Todo>,
     onupdate: Callback<Todo>,
     ontoggle: Callback<Todo>,
