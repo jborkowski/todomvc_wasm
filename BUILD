@@ -71,10 +71,3 @@ rust_wasm_bindgen(
     wasm_file = ":app",
 )
 
-wasmopt(
-    name = "app_wasm_opt",
-    src = ":app_wasm",
-    out = "app_wasm_bg_opt.wasm",
-)
-
-

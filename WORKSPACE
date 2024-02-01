@@ -1,7 +1,5 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# To find additional information on this release or newer ones visit:
-# https://github.com/bazelbuild/rules_rust/releases
 http_archive(
     name = "rules_rust",
     integrity = "sha256-ZQGWDD5NoySV0eEAfe0HaaU0yxlcMN6jaqVPnYo/A2E=",
@@ -62,3 +60,14 @@ yarn_install(
     package_json = "//bundle:package.json",
     yarn_lock = "//bundle:yarn.lock",
 )
+
+yarn_install(
+    name = "root_npm",
+    package_json = "//:package.json",
+    yarn_lock = "//:yarn.lock",
+)
+
+load("@build_bazel_rules_nodejs//toolchains/esbuild:esbuild_repositories.bzl", "esbuild_repositories")
+
+# esbuild only works in root npm repository
+esbuild_repositories(npm_repository = "root_npm")
