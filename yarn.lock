@@ -2,7 +2,11 @@
 # yarn lockfile v1
 
 
+"@bazel/ibazel@^0.24.0":
+  version "0.24.0"
+  resolved "https://registry.npmjs.org/@bazel/ibazel/-/ibazel-0.24.0.tgz"
+  integrity sha512-lA0Ey6iorssDTJDwBQW0bCmzQyBTAtOj7L4mqmmlFT6LhIzTc3r0iFOuzxFBsDq8NbxVs/W9PRNIsC/LfpI1nA==
+
 todomvc-app-css@^2.4.3:
   version "2.4.3"
-  resolved "https://registry.yarnpkg.com/todomvc-app-css/-/todomvc-app-css-2.4.3.tgz#f2ed6e02dd9bb92527f0c8d84c5142e8e0d131d1"
   integrity sha512-mSnWZaKBWj9aQcFRsGguY/a8O8NR8GmecD48yU1rzwNemgZa/INLpIsxxMiToFGVth+uEKBrQ7IhWkaXZxwq5Q==

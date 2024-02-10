@@ -29,6 +29,7 @@ crates_repository(
     lockfile = "//:cargo-bazel.lock.json",
     manifests = [
         "//:Cargo.toml",
+        "//:server/Cargo.toml",
     ],
     splicing_config = splicing_config(resolver_version = "2"),
 )
@@ -51,23 +52,19 @@ load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_d
 
 build_bazel_rules_nodejs_dependencies()
 
-load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install")
+load("@build_bazel_rules_nodejs//:index.bzl", "node_repositories", "yarn_install", "npm_install")
 
 node_repositories()
 
-yarn_install(
+# yarn_install(
+#     name = "app_npm",
+#     package_json = "//:package.json",
+#     yarn_lock = "//:yarn.lock",
+# )
+
+npm_install(
     name = "app_npm",
-    package_json = "//bundle:package.json",
-    yarn_lock = "//bundle:yarn.lock",
-)
-
-yarn_install(
-    name = "root_npm",
     package_json = "//:package.json",
-    yarn_lock = "//:yarn.lock",
+    package_lock_json = "//:package-lock.json",  
 )
 
-load("@build_bazel_rules_nodejs//toolchains/esbuild:esbuild_repositories.bzl", "esbuild_repositories")
-
-# esbuild only works in root npm repository
-esbuild_repositories(npm_repository = "root_npm")

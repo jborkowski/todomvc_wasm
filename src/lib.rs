@@ -7,7 +7,7 @@ use yew_router::prelude::*;
 struct TodoAppProp {
     current_route: Route,
 }
-
+    
 #[function_component(TodoApp)]
 fn todo_app(props: &TodoAppProp) -> Html {
     use rand::Rng;

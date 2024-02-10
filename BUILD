@@ -3,7 +3,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
 load("@rules_rust//wasm_bindgen:defs.bzl", "rust_wasm_bindgen")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//:__subpackages__"])
 
 config_setting(
     name = "fastbuild",
@@ -70,4 +70,5 @@ rust_wasm_bindgen(
     target = "web",
     wasm_file = ":app",
 )
+
 

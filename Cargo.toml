@@ -6,6 +6,9 @@ edition = "2021"
 [[bin]]
 name = "app"
 
+[workspace]
+members = [".", "server"]
+
 [dependencies]
 log = "0.4.20"
 rand = "0.8.5"

@@ -5,6 +5,7 @@
   "author": "Jonatan Borkowski",
   "license": "ISC",
   "dependencies": {
+    "@bazel/ibazel": "^0.24.0",
     "todomvc-app-css": "^2.4.3"
   }
 }
