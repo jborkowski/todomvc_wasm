@@ -1,2 +1,3 @@
 build --symlink_prefix=target/
 build --incompatible_enable_cc_toolchain_resolution=1
+sync --only=crate_index
